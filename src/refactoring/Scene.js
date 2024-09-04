@@ -108,7 +108,7 @@ export class Scene {
 
     const sizeInitializerGenerator = new Photons.RandomGenerator(
       THREE.Vector2,
-      new THREE.Vector2(0.0, 0.0),
+      new THREE.Vector2(0.05 * scale, 0.05 * scale),
       new THREE.Vector2(scale * 0.15, scale * 0.15),
       0.0,
       0.0,
@@ -122,15 +122,15 @@ export class Scene {
     );
     embersParticleSystem.addParticleStateInitializer(
       new Photons.BoxPositionInitializer(
-        new THREE.Vector3(0.05 * scale, 0.0, 0.05 * scale),
-        new THREE.Vector3(-0.025 * scale, 0.0, -0.025 * scale)
+        new THREE.Vector3(-0.1 * scale, -1.0, -0.1 * scale),
+        new THREE.Vector3(-0.025 * scale, 1.0, -0.025 * scale)
       )
     );
     embersParticleSystem.addParticleStateInitializer(
       new Photons.RandomVelocityInitializer(
-        new THREE.Vector3(0.4 * scale, 0.5 * scale, 0.4 * scale),
-        new THREE.Vector3(-0.2 * scale, 0.8 * scale, -0.2 * scale),
-        0.6 * scale,
+        new THREE.Vector3(0.4 * scale, -0.5 * scale, 0.4 * scale),
+        new THREE.Vector3(-1 * scale, 0.8 * scale, -1 * scale),
+        -0.4 * scale,
         0.8 * scale,
         false
       )
@@ -526,8 +526,8 @@ export class Scene {
       new Photons.SizeInitializer(
         new Photons.RandomGenerator(
           THREE.Vector2,
-          new THREE.Vector2(0.1 * scale, 0.1 * scale),
           new THREE.Vector2(0.25 * scale, 0.25 * scale),
+          new THREE.Vector2(0.5 * scale, 0.5 * scale),
           0.0,
           0.0,
           false
@@ -536,16 +536,16 @@ export class Scene {
     );
     smokeParticleSystem.addParticleStateInitializer(
       new Photons.BoxPositionInitializer(
-        new THREE.Vector3(0.2 * scale, 0.2 * scale, 0.2 * scale),
-        new THREE.Vector3(-0.1 * scale, 0.1 * scale, -0.1 * scale)
+        new THREE.Vector3(0.25 * scale, 0.1 * scale, 0.25 * scale),
+        new THREE.Vector3(-0.1 * scale, 0.0 * scale, -0.1 * scale)
       )
     );
     smokeParticleSystem.addParticleStateInitializer(
       new Photons.RandomVelocityInitializer(
-        new THREE.Vector3(0.02 * scale, 0.08 * scale, 0.02 * scale),
+        new THREE.Vector3(0.2 * scale, 0.06 * scale, 0.2 * scale),
         new THREE.Vector3(-0.01 * scale, 0.04 * scale, -0.01 * scale),
         0.03 * scale,
-        0.04 * scale,
+        -0.3 * scale,
         false
       )
     );
@@ -571,11 +571,11 @@ export class Scene {
       new Photons.SizeInterpolatorOperator(true)
     );
     smokeSizeOperator.addElementsFromParameters([
-      [[1.0, 1.0], 0.0],
-      [[0.8, 0.8], 0.4],
-      [[0.2, 0.2], 0.55],
-      [[0.1, 0.1], 0.75],
-      [[0.1, 0.1], 1.0],
+      [[0.3, 0.3], 0.0],
+      [[0.8, 0.8], 0.25],
+      [[1.0, 1.0], 0.5],
+      [[0.5, 0.5], 0.65],
+      [[0.25, 0.25], 1.0],
     ]);
 
     const smokeColorOperator = smokeParticleSystem.addParticleStateOperator(
