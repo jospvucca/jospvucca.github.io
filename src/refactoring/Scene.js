@@ -60,11 +60,10 @@ export class Scene {
     let smokePosition = new THREE.Vector3(-0.3, 1.75, 1.65);
     this.manager.addParticleSystem(this.setupEmbers(scale, flamePosition));
     this.manager.addParticleSystem(this.setupBaseFlame(scale, flamePosition));
-    this.manager.addParticleSystem(this.setupBrightFlame(scale, flamePosition));
+    //this.manager.addParticleSystem(this.setupBrightFlame(scale, flamePosition));
     this.manager.addParticleSystem(
       this.setupSmoke(scale + 0.25, smokePosition)
     );
-    //this.manager.addParticleSystem(this.setupSmokeNew(scale, flamePosition));
   }
 
   setupEmbers(scale, position) {
@@ -117,6 +116,7 @@ export class Scene {
     embersParticleSystem.addParticleStateInitializer(
       new Photons.LifetimeInitializer(2.5, 0.5, 0.0, 0.0, false)
     );
+
     embersParticleSystem.addParticleStateInitializer(
       new Photons.SizeInitializer(sizeInitializerGenerator)
     );
@@ -129,7 +129,7 @@ export class Scene {
     embersParticleSystem.addParticleStateInitializer(
       new Photons.RandomVelocityInitializer(
         new THREE.Vector3(0.4 * scale, -0.5 * scale, 0.4 * scale),
-        new THREE.Vector3(-1 * scale, 0.8 * scale, -1 * scale),
+        new THREE.Vector3(-0.5 * scale, 0.8 * scale, -0.5 * scale),
         -0.4 * scale,
         0.8 * scale,
         false
@@ -151,8 +151,8 @@ export class Scene {
     );
     emberColorOperator.addElementsFromParameters([
       [[1.0, 0.7, 0.0], 0.0],
-      [[1.0, 0.6, 0.0], 0.5],
-      [[1.0, 0.4, 0.0], 1.0],
+      [[1.0, 0.4, 0.0], 0.5],
+      [[0.7, 0.2, 0.0], 1.0],
     ]);
 
     const acceleratorOperatorGenerator = new Photons.SphereRandomGenerator(
@@ -160,8 +160,8 @@ export class Scene {
       0.0,
       Math.PI,
       -Math.PI / 2,
-      20.0,
-      -8,
+      30.0,
+      -15,
       scale,
       scale,
       scale,
@@ -182,12 +182,11 @@ export class Scene {
   }
 
   setupBaseFlame(scale, position) {
-    scale *= 3;
+    scale *= 7;
 
     const baseFlameRoot = new THREE.Object3D();
     baseFlameRoot.position.copy(position);
 
-    //TODO - textures missing
     const texturePath = new URL(
       "../assets/assets-photons/textures/base_flame.png",
       import.meta.url
@@ -215,16 +214,16 @@ export class Scene {
       baseFlameRenderer,
       this.renderer
     );
-    baseFlameParticleSystem.init(50);
+    baseFlameParticleSystem.init(18);
 
-    baseFlameParticleSystem.setEmitter(new Photons.ConstantParticleEmitter(10));
+    baseFlameParticleSystem.setEmitter(new Photons.ConstantParticleEmitter(18));
 
     baseFlameParticleSystem.addParticleSequence(0, 18);
     const baseFlameParticleSequences =
       baseFlameParticleSystem.getParticleSequences();
 
     baseFlameParticleSystem.addParticleStateInitializer(
-      new Photons.LifetimeInitializer(0.0, 0.0, 0.0, 0.0, false)
+      new Photons.LifetimeInitializer(1.1, 0.0, 0.0, 0.0, false) //Adjust after box and accel design
     );
     baseFlameParticleSystem.addParticleStateInitializer(
       new Photons.RotationInitializer(
@@ -247,7 +246,7 @@ export class Scene {
           THREE.Vector2,
           new THREE.Vector2(0.25 * scale, 0.25 * scale),
           new THREE.Vector2(0.5 * scale, 0.5 * scale),
-          0.0,
+          0.5,
           0.0,
           false
         )
@@ -256,16 +255,16 @@ export class Scene {
 
     baseFlameParticleSystem.addParticleStateInitializer(
       new Photons.BoxPositionInitializer(
-        new THREE.Vector3(0.05 * scale, 0.0, 0.05 * scale),
-        new THREE.Vector3(-0.025 * scale, 0.0, -0.025 * scale)
+        new THREE.Vector3(0.15 * scale, 0.0, 0.15 * scale),
+        new THREE.Vector3(-0.025 * scale, 0.1, -0.025 * scale)
       )
     );
     baseFlameParticleSystem.addParticleStateInitializer(
       new Photons.RandomVelocityInitializer(
-        new THREE.Vector3(0.05 * scale, 0.4 * scale, 0.05 * scale),
+        new THREE.Vector3(0.05 * scale, 0.2 * scale, 0.05 * scale),
         new THREE.Vector3(-0.025 * scale, 0.8 * scale, -0.025 * scale),
         0.35 * scale,
-        0.5 * scale,
+        0.05 * scale,
         false
       )
     );
@@ -282,9 +281,9 @@ export class Scene {
         new Photons.OpacityInterpolatorOperator()
       );
     baseFlameOpacityOperator.addElements([
-      [0.0, 0.0],
-      [0.3, 0.25],
-      [0.3, 0.5],
+      [0.1, 0.0],
+      [0.5, 0.25],
+      [0.15, 0.4],
       [0.0, 1.0],
     ]);
 
@@ -293,9 +292,10 @@ export class Scene {
         new Photons.SizeInterpolatorOperator(true)
       );
     baseFlameSizeOperator.addElementsFromParameters([
-      [[0.6, 0.6], 0.0],
-      [[1.0, 1.0], 0.4],
-      [[1.0, 1.0], 1.0],
+      [[0.2, 0.2], 0.0],
+      [[0.65, 0.65], 0.3],
+      [[0.7, 0.7], 0.6],
+      [[0.05, 0.05], 1.0],
     ]);
 
     const baseFlameColorOperator =
@@ -304,8 +304,9 @@ export class Scene {
       );
     baseFlameColorOperator.addElementsFromParameters([
       [[1.0, 1.0, 1.0], 0.0],
-      [[1.5, 1.5, 1.5], 0.5],
-      [[1.0, 1.0, 1.0], 1.0],
+      [[4.0, 3.0, 2.0], 0.55],
+      [[0.8, 0.8, 0.8], 0.7],
+      [[0.1, 0.1, 0.1], 1.0],
     ]);
 
     baseFlameParticleSystem.addParticleStateOperator(
@@ -561,10 +562,10 @@ export class Scene {
       new Photons.OpacityInterpolatorOperator()
     );
     smokeOpacityOperator.addElements([
-      [1.0, 0.0],
-      [0.3, 0.5],
-      [0.7, 0.3],
-      [1.0, 0.0],
+      [0.6, 0.0],
+      [0.7, 0.1],
+      [0.8, 0.5],
+      [1.0, 1.0],
     ]);
 
     const smokeSizeOperator = smokeParticleSystem.addParticleStateOperator(
@@ -582,7 +583,8 @@ export class Scene {
       new Photons.ColorInterpolatorOperator(true)
     );
     smokeColorOperator.addElementsFromParameters([
-      [[0.8, 0.8, 0.8], 0.0], // Starting gray
+      [[0.6, 0.6, 0.6], 0.0], // Starting gray
+      [[0.8, 0.8, 0.8], 0.2],
       [[1.0, 1.0, 1.0], 1.0], // Fade to white
     ]);
 
@@ -591,7 +593,7 @@ export class Scene {
         new Photons.RandomGenerator(
           THREE.Vector3,
           new THREE.Vector3(0.0, 0.0, 0.0),
-          new THREE.Vector3(0.1, 1.5 * scale, 0.1),
+          new THREE.Vector3(0.1, 1.3 * scale, 0.1),
           1.0,
           -1.0,
           false
