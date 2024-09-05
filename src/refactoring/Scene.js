@@ -60,7 +60,7 @@ export class Scene {
     let smokePosition = new THREE.Vector3(-0.3, 1.75, 1.65);
     this.manager.addParticleSystem(this.setupEmbers(scale, flamePosition));
     this.manager.addParticleSystem(this.setupBaseFlame(scale, flamePosition));
-    //this.manager.addParticleSystem(this.setupBrightFlame(scale, flamePosition));
+    this.manager.addParticleSystem(this.setupBrightFlame(scale, flamePosition));
     this.manager.addParticleSystem(
       this.setupSmoke(scale + 0.25, smokePosition)
     );
@@ -362,10 +362,10 @@ export class Scene {
       brightFlameRenderer,
       this.renderer
     );
-    brightFlameParticleSystem.init(20);
+    brightFlameParticleSystem.init(16);
 
     brightFlameParticleSystem.setEmitter(
-      new Photons.ConstantParticleEmitter(5)
+      new Photons.ConstantParticleEmitter(4)
     );
 
     brightFlameParticleSystem.addParticleSequence(0, 16);
@@ -395,8 +395,8 @@ export class Scene {
           THREE.Vector2,
           new THREE.Vector2(0.0, 0.0),
           new THREE.Vector2(0.0, 0.0),
-          0.2 * scale,
-          0.65 * scale,
+          0.5 * scale,
+          0.4 * scale,
           false
         )
       )
@@ -410,7 +410,7 @@ export class Scene {
     brightFlameParticleSystem.addParticleStateInitializer(
       new Photons.RandomVelocityInitializer(
         new THREE.Vector3(0.02 * scale, 0.4 * scale, 0.02 * scale),
-        new THREE.Vector3(-0.01 * scale, 0.4 * scale, -0.01 * scale),
+        new THREE.Vector3(-0.01 * scale, 0.1 * scale, -0.01 * scale),
         0.1 * scale,
         0.2 * scale,
         false
@@ -429,9 +429,9 @@ export class Scene {
         new Photons.OpacityInterpolatorOperator()
       );
     brightFlameOpacityOperator.addElements([
-      [0.0, 0.0],
-      [0.6, 0.2],
-      [0.5, 0.75],
+      [0.2, 0.0],
+      [1.0, 0.2],
+      [0.5, 0.5],
       [0.0, 1.0],
     ]);
 
@@ -443,8 +443,8 @@ export class Scene {
       [[0.3, 0.3], 0.0],
       [[1.0, 1.0], 0.4],
       [[1.0, 1.0], 0.55],
-      [[0.65, 0.65], 0.75],
-      [[0.1, 0.1], 1.0],
+      [[0.65, 0.65], 0.7],
+      [[0.0, 0.0], 1.0],
     ]);
 
     const brightFlameColorOperator =
@@ -454,7 +454,7 @@ export class Scene {
     brightFlameColorOperator.addElementsFromParameters([
       [[1.0, 1.0, 1.0], 0.0],
       [[2.0, 2.0, 2.0], 0.3],
-      [[2.0, 2.0, 2.0], 0.4],
+      [[2.0, 1.5, 1.5], 0.5],
       [[0.9, 0.6, 0.3], 0.65],
       [[0.75, 0.0, 0.0], 1.0],
     ]);
@@ -464,7 +464,7 @@ export class Scene {
         new Photons.RandomGenerator(
           THREE.Vector3,
           new THREE.Vector3(0.0, 0.0, 0.0),
-          new THREE.Vector3(0.0, 1.5 * scale, 0.0),
+          new THREE.Vector3(0.0, 1.2 * scale, 0.0),
           0.0,
           0.0,
           false
