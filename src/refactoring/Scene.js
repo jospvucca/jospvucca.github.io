@@ -870,7 +870,7 @@ export class Scene {
       // this.scene.add(fogParent);
 
       let torchPostPosition = new THREE.Vector3(-0.31, 1, 1.65);
-      this.scene.add(torchObject.scene);
+      //this.scene.add(torchObject.scene);
       Scene.traverseScene(torchObject.scene, (node) => {
         if (node.isMesh) {
           node.castShadow = false;
