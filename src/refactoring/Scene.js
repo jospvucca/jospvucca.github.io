@@ -831,97 +831,196 @@ export class Scene {
       );
     });
 
+    const skeletonPath = new URL(
+      "../assets/models/skeleton/skeleton4.glb",
+      import.meta.url
+    ).href;
+    const skeletonLoadPromise = new Promise((resolve, reject) => {
+      modelLoader.load(
+        skeletonPath,
+        (object) => {
+          resolve(object);
+        },
+        null,
+        (err) => {
+          console.log("Error loading the model Skeleton: ", err);
+          reject(err);
+        }
+      );
+    });
+
+    const terrainPath = new URL(
+      "../assets/models/terrain/canyon2.gltf",
+      import.meta.url
+    ).href;
+    const terrainLoadPromise = new Promise((resolve, reject) => {
+      modelLoader.load(
+        terrainPath,
+        (object) => {
+          resolve(object);
+        },
+        null,
+        (err) => {
+          console.log("Error loading the model Terrain: ", err);
+          reject(err);
+        }
+      );
+    });
+
     return Promise.all([
       graveyardLoadPromise,
       torchLoadPromise,
       campfireLoadPromise,
-    ]).then(([graveyardObject, torchObject, campfireObject]) => {
-      //this.scene.add(graveyardObject.scene);
-      Scene.traverseScene(graveyardObject.scene, (node) => {
-        if (node.isMesh) {
-          if (node.name == "Opaque") {
-            node.castShadow = true;
-            node.recieveShadow = true;
-            const oldMaterial = node.material;
-            node.material = new THREE.MeshStandardMaterial();
-            node.material.map = oldMaterial.map;
-            node.material.normalMap = oldMaterial.normalMap;
-            node.material.normalScale.copy(oldMaterial.normalScale);
-            node.material.roughness = 0.6;
+      skeletonLoadPromise,
+      terrainLoadPromise,
+    ]).then(
+      ([
+        graveyardObject,
+        torchObject,
+        campfireObject,
+        skeletonObject,
+        terrainObject,
+      ]) => {
+        //this.scene.add(graveyardObject.scene);
+        Scene.traverseScene(graveyardObject.scene, (node) => {
+          if (node.isMesh) {
+            if (node.name == "Opaque") {
+              node.castShadow = true;
+              node.recieveShadow = true;
+              const oldMaterial = node.material;
+              node.material = new THREE.MeshStandardMaterial();
+              node.material.map = oldMaterial.map;
+              node.material.normalMap = oldMaterial.normalMap;
+              node.material.normalScale.copy(oldMaterial.normalScale);
+              node.material.roughness = 0.6;
+            }
           }
-        }
-      });
+        });
 
-      graveyardObject.scene.scale.set(0.75, 0.75, 0.75);
+        graveyardObject.scene.scale.set(0.75, 0.75, 0.75);
 
-      //Fog is missing, probably should be commented out
-      // const fogParent = new THREE.Object3D();
-      // const fogGeometry = new THREE.PlaneGeometry(1, 1);
-      // const fogMaterial = new FogMaterial({
-      //   side: THREE.DoubleSide,
-      // });
-      // fogMaterial.transparent = true;
-      // fogMaterial.depthWrite = false;
-      // const fogPlane = new THREE.Mesh(fogGeometry, fogMaterial);
-      // fogPlane.scale.set(32, 32, 0);
-      // fogPlane.rotateX(-Math.PI / 2);
-      // fogParent.add(fogPlane);
-      // fogParent.position.y += 1.0;
-      // this.scene.add(fogParent);
+        //Fog is missing, probably should be commented out
+        // const fogParent = new THREE.Object3D();
+        // const fogGeometry = new THREE.PlaneGeometry(1, 1);
+        // const fogMaterial = new FogMaterial({
+        //   side: THREE.DoubleSide,
+        // });
+        // fogMaterial.transparent = true;
+        // fogMaterial.depthWrite = false;
+        // const fogPlane = new THREE.Mesh(fogGeometry, fogMaterial);
+        // fogPlane.scale.set(32, 32, 0);
+        // fogPlane.rotateX(-Math.PI / 2);
+        // fogParent.add(fogPlane);
+        // fogParent.position.y += 1.0;
+        // this.scene.add(fogParent);
 
-      let torchPostPosition = new THREE.Vector3(-0.31, 1, 1.65);
-      //this.scene.add(torchObject.scene);
-      Scene.traverseScene(torchObject.scene, (node) => {
-        if (node.isMesh) {
-          node.castShadow = false;
-          node.recieveShadow = false;
-        }
-      });
-      torchObject.scene.scale.set(1.2, 1.15, 1.2);
-      torchObject.scene.position.copy(torchPostPosition);
-
-      let campfirePosition = new THREE.Vector3(-0.31, 1, 1.65);
-      this.scene.add(campfireObject.scene);
-      Scene.traverseScene(campfireObject.scene, (node) => {
-        if (node.isMesh) {
-          if (node.name == "Opaque") {
-            node.castShadow = true;
-            node.recieveShadow = true;
-            const oldMaterial = node.material;
-            node.material = new THREE.MeshStandardMaterial();
-            node.material.map = oldMaterial.map;
-            node.material.normalMap = oldMaterial.normalMap;
-            node.material.normalScale.copy(oldMaterial.normalScale);
-            node.material.roughness = 0.6;
+        let torchPostPosition = new THREE.Vector3(-0.31, 1, 1.65);
+        //this.scene.add(torchObject.scene);
+        Scene.traverseScene(torchObject.scene, (node) => {
+          if (node.isMesh) {
+            node.castShadow = false;
+            node.recieveShadow = false;
           }
-        }
-      });
-      campfireObject.scene.scale.set(1.2, 1.15, 1.2);
-      campfireObject.scene.position.copy(campfirePosition);
+        });
+        torchObject.scene.scale.set(1.2, 1.15, 1.2);
+        torchObject.scene.position.copy(torchPostPosition);
 
-      const lightParent = new THREE.Object3D();
-      this.scene.add(lightParent);
-      lightParent.position.copy(torchPostPosition);
-      lightParent.position.add(new THREE.Vector3(0.0, 0.65, 0.0));
+        let campfirePosition = new THREE.Vector3(-0.31, 1.1, 1.65);
+        this.scene.add(campfireObject.scene);
+        Scene.traverseScene(campfireObject.scene, (node) => {
+          if (node.isMesh) {
+            if (node.name == "Opaque") {
+              node.castShadow = true;
+              node.recieveShadow = true;
+              const oldMaterial = node.material;
+              node.material = new THREE.MeshStandardMaterial();
+              node.material.map = oldMaterial.map;
+              node.material.normalMap = oldMaterial.normalMap;
+              node.material.normalScale.copy(oldMaterial.normalScale);
+              node.material.roughness = 0.6;
+            }
+          }
+        });
+        campfireObject.scene.scale.set(1.2, 1.15, 1.2);
+        campfireObject.scene.position.copy(campfirePosition);
 
-      const flickerLightShadows = {
-        mapSize: 1024,
-        cameraNear: 0.5,
-        cameraFar: 500,
-        bias: 0.000009,
-        edgeRadius: 3,
-      };
-      this.manager.addComponent(
-        new Photons.FlickerLight(
-          lightParent,
-          10, //Should be 10 but for testing 0 = disabled light
-          2,
-          new THREE.Color().setRGB(1, 0.8, 0.4),
-          0,
-          1.0,
-          flickerLightShadows
-        )
-      );
-    });
+        let skeletonPosition = new THREE.Vector3(2, 0.9, 0);
+        let skeletonRotation = new THREE.Euler(0, -1.0, 0);
+        this.scene.add(skeletonObject.scene);
+        Scene.traverseScene(skeletonObject.scene, (node) => {
+          if (node.isMesh) {
+            if (node.name == "Opaque") {
+              node.castShadow = true;
+              node.recieveShadow = true;
+              const oldMaterial = node.material;
+              node.material = new THREE.MeshStandardMaterial();
+              node.material.map = oldMaterial.map;
+              node.material.normalMap = oldMaterial.normalMap;
+              node.material.normalScale.copy(oldMaterial.normalScale);
+              node.material.roughness = 0.6;
+            }
+          }
+        });
+        skeletonObject.scene.scale.set(1.8, 1.8, 1.8);
+        skeletonObject.scene.position.copy(skeletonPosition);
+        skeletonObject.scene.rotation.copy(skeletonRotation);
+
+        let terrainPosition = new THREE.Vector3(0, 1, 0);
+        let terrainRotation = new THREE.Euler(0, -10.0, 0);
+        this.scene.add(terrainObject.scene);
+        Scene.traverseScene(terrainObject.scene, (node) => {
+          // if (node.isMesh) {
+          //   if (node.name == "Opaque") {
+          //     node.castShadow = true;
+          //     node.recieveShadow = true;
+          //     const oldMaterial = node.material;
+          //     node.material = new THREE.MeshStandardMaterial();
+          //     node.material.map = oldMaterial.map;
+          //     node.material.normalMap = oldMaterial.normalMap;
+          //     node.material.normalScale.copy(oldMaterial.normalScale);
+          //     node.material.roughness = 0.6;
+          //   }
+          // }
+        });
+        terrainObject.scene.scale.set(1.8, 1.8, 1.8);
+        terrainObject.scene.rotation.copy(terrainRotation);
+        terrainObject.scene.position.copy(terrainPosition);
+
+        const lightParent = new THREE.Object3D();
+        this.scene.add(lightParent);
+        lightParent.position.copy(torchPostPosition);
+
+        // const pointLight = new THREE.PointLight(
+        //   new THREE.Color(1, 0.8, 0.0),
+        //   200,
+        //   100,
+        //   1
+        // );
+        // pointLight.power = 100;
+        // pointLight.position.copy(lightParent);
+        // pointLight.rotation.set(0, 0, 0);
+        // pointLight.position.add(new THREE.Vector3(0, 0, 10));
+        // this.scene.add(pointLight);
+
+        const flickerLightShadows = {
+          mapSize: 1024,
+          cameraNear: 0.5,
+          cameraFar: 500,
+          bias: 0.000009,
+          edgeRadius: 3,
+        };
+        this.manager.addComponent(
+          new Photons.FlickerLight(
+            lightParent,
+            10, //Should be 10 but for testing 0 = disabled light
+            2,
+            new THREE.Color().setRGB(1, 0.8, 0.4),
+            0,
+            1.0,
+            flickerLightShadows
+          )
+        );
+      }
+    );
   }
 }
