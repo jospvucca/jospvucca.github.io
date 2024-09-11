@@ -831,6 +831,24 @@ export class Scene {
       );
     });
 
+    const campfireTestingPath = new URL(
+      "../assets/models/campfire_test/stone_fire_pit_4k.gltf",
+      import.meta.url
+    ).href;
+    const campfireTestLoadPromise = new Promise((resolve, reject) => {
+      modelLoader.load(
+        campfireTestingPath,
+        (object) => {
+          resolve(object);
+        },
+        null,
+        (err) => {
+          console.log("Error loading the model CampfireTest: ", err);
+          reject(err);
+        }
+      );
+    });
+
     const skeletonPath = new URL(
       "../assets/models/skeleton/skeleton4.glb",
       import.meta.url
@@ -844,6 +862,22 @@ export class Scene {
         null,
         (err) => {
           console.log("Error loading the model Skeleton: ", err);
+          reject(err);
+        }
+      );
+    });
+
+    const tentPath = new URL("../assets/models/tent/tent.gltf", import.meta.url)
+      .href;
+    const tentLoadPromise = new Promise((resolve, reject) => {
+      modelLoader.load(
+        tentPath,
+        (object) => {
+          resolve(object);
+        },
+        null,
+        (err) => {
+          console.log("Error loading the model Tent: ", err);
           reject(err);
         }
       );
@@ -867,19 +901,44 @@ export class Scene {
       );
     });
 
+    const propsPath = new URL(
+      "../assets/models/terrain/props/ue/SM_Oak_Sapling_a.gltf",
+      import.meta.url
+    ).href;
+
+    const propsLoadPromise = new Promise((resolve, reject) => {
+      modelLoader.load(
+        propsPath,
+        (object) => {
+          resolve(object);
+        },
+        null,
+        (err) => {
+          console.log("Error loading prop with path: ", err);
+          reject(err);
+        }
+      );
+    });
+
     return Promise.all([
       graveyardLoadPromise,
       torchLoadPromise,
       campfireLoadPromise,
+      campfireTestLoadPromise,
       skeletonLoadPromise,
+      tentLoadPromise,
       terrainLoadPromise,
+      propsLoadPromise,
     ]).then(
       ([
         graveyardObject,
         torchObject,
         campfireObject,
+        campfireTestObject,
         skeletonObject,
+        tentObject,
         terrainObject,
+        propsObject,
       ]) => {
         //this.scene.add(graveyardObject.scene);
         Scene.traverseScene(graveyardObject.scene, (node) => {
@@ -944,6 +1003,26 @@ export class Scene {
         campfireObject.scene.scale.set(1.2, 1.15, 1.2);
         campfireObject.scene.position.copy(campfirePosition);
 
+        ///         TEST je prosa, maknit kamenja iz originalnog objecta
+        let campfireTestPosition = new THREE.Vector3(-0.31, 1.1, 1.65);
+        this.scene.add(campfireTestObject.scene);
+        Scene.traverseScene(campfireTestObject.scene, (node) => {
+          if (node.isMesh) {
+            if (node.name == "Opaque") {
+              node.castShadow = true;
+              node.recieveShadow = true;
+              const oldMaterial = node.material;
+              node.material = new THREE.MeshStandardMaterial();
+              node.material.map = oldMaterial.map;
+              node.material.normalMap = oldMaterial.normalMap;
+              node.material.normalScale.copy(oldMaterial.normalScale);
+              node.material.roughness = 0.6;
+            }
+          }
+        });
+        campfireTestObject.scene.scale.set(1.2, 1.2, 1.2);
+        campfireTestObject.scene.position.copy(campfireTestPosition);
+
         let skeletonPosition = new THREE.Vector3(2, 0.9, 0);
         let skeletonRotation = new THREE.Euler(0, -1.0, 0);
         this.scene.add(skeletonObject.scene);
@@ -965,6 +1044,14 @@ export class Scene {
         skeletonObject.scene.position.copy(skeletonPosition);
         skeletonObject.scene.rotation.copy(skeletonRotation);
 
+        let tentPosition = new THREE.Vector3(-4.5, 1.0, 1.0);
+        let tentRotation = new THREE.Euler(0.0, 1.8, 0.0);
+        this.scene.add(tentObject.scene);
+        Scene.traverseScene(tentObject.scene, (node) => {});
+        tentObject.scene.scale.set(1.2, 1.2, 1.2);
+        tentObject.scene.position.copy(tentPosition);
+        tentObject.scene.rotation.copy(tentRotation);
+
         let terrainPosition = new THREE.Vector3(0, 1, 0);
         let terrainRotation = new THREE.Euler(0, -10.0, 0);
         this.scene.add(terrainObject.scene);
@@ -985,6 +1072,13 @@ export class Scene {
         terrainObject.scene.scale.set(1.8, 1.8, 1.8);
         terrainObject.scene.rotation.copy(terrainRotation);
         terrainObject.scene.position.copy(terrainPosition);
+
+        let propsPosition = new THREE.Vector3(0, 0, 0);
+        this.scene.add(propsObject.scene);
+        Scene.traverseScene(propsObject.scene, (node) => {});
+        propsObject.scene.scale.set(10, 10, 10);
+        propsObject.scene.position.copy(campfirePosition);
+        console.log(propsObject);
 
         const lightParent = new THREE.Object3D();
         this.scene.add(lightParent);
