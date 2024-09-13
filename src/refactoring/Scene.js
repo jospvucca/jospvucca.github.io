@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import * as Photons from "../photons/photons.module.js";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
+import { BlackHole } from "../galaxy/BlackHole.js";
 
 export class Scene {
   constructor(scene, camera, renderer) {
@@ -13,6 +14,8 @@ export class Scene {
     this.jsonTypeStore.addNamespace("THREE", THREE);
     this.jsonTypeStore.addNamespace("Photons", Photons);
     this.instancedParticleSystems = true;
+    this.blackHole = new BlackHole();
+    this.clock = new THREE.Clock();
   }
 
   build() {
@@ -29,6 +32,8 @@ export class Scene {
 
   update() {
     this.manager.update();
+    const deltaTime = this.clock.getDelta();
+    this.blackHole.update(deltaTime, this.camera.position);
 
     for (let system of this.manager.particleSystems) {
       system.update();
@@ -774,6 +779,8 @@ export class Scene {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     this.scene.add(directionalLight);
     directionalLight.position.set(5, 5, 5);
+
+    this.scene.add(this.blackHole.getMesh());
 
     //TODO - missing model path, GLTFLoader is used by third party lib, change if it causes problems
     const modelLoader = new GLTFLoader();
