@@ -21,6 +21,22 @@
   </head>
 
   <body>
+    <script src="js-libs/mustache.min.js"></script>
+    <script src="js-libs/ShaderLoader.min.js"></script>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+
+      void main()    {
+
+          gl_Position = vec4( position, 1.0 );
+
+      }
+
+  </script>
+  <!-- NEMA VELIKE RAZLIKE SA I BEZ VERTEX SHADERA -->
+  <!-- <script data-src="src/galaxy/raytracer.glsl" data-name="raytracer" type="x-shader/x-fragment"></script> -->
+  <script data-src="src/galaxy/fragmentShader.glsl" data-name="fragmentShader" type="x-shader/x-fragment"></script>
+
     <script type="module" src="src/refactoring/Main.js"></script>
     <div id = "root"></div>
   </body>

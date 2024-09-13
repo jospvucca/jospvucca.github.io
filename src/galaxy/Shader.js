@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import Mustache from "../../js-libs/mustache.min.js";
+// import { Mustache } from "../../js-libs/mustache.min.js";
 
 export class Shader {
   constructor(fragmentTemplate) {
@@ -30,11 +30,14 @@ export class Shader {
 
   compile() {
     // Using Mustache.js to compile the fragment shader
-    return Mustache.render(this.fragmentTemplate, {
-      planet_distance: this.parameters.planet.distance,
-      planet_radius: this.parameters.planet.radius,
-      n_steps: this.parameters.steps,
-    });
+    const compiledFragmentShader = Mustache.render(
+      this.fragmentTemplate,
+      this.parameters
+    );
+    // Log the output to check if it's valid GLSL code
+    console.log("Compiled Fragment Shader:", compiledFragmentShader);
+
+    return compiledFragmentShader;
   }
 }
 
@@ -46,26 +49,39 @@ export class ShaderLoader {
   load(callback) {
     const loadShaderFile = (path, name, type, onLoad) => {
       const loader = new THREE.FileLoader();
-      loader.load(path, (data) => {
-        if (!this.shader) this.shader = {};
-        if (!this.shader[name])
-          this.shader[name] = { vertex: "", fragment: "" };
-        this.shader[name][type] = data;
-        onLoad(this.shader);
-      });
+      loader.setResponseType("text"); // Ensure that the response is treated as text
+      loader.load(
+        path,
+        (data) => {
+          if (!this.shader) this.shader = {}; // Initialize the shader object if it doesn't exist
+          if (!this.shader[name])
+            this.shader[name] = { vertex: "", fragment: "" };
+          this.shader[name][type] = data; // Store the shader data (vertex or fragment)
+          onLoad(this.shader); // Callback after loading
+        },
+        undefined, // onProgress (optional)
+        (err) => {
+          console.error(`Error loading shader file: ${path}`, err);
+        }
+      );
     };
 
-    const vertexPath = "./shaders/raytracer.vert"; // Replace with actual vertex shader path
-    const fragmentPath = "./raytracer.glsl"; // Replace with actual fragment shader path
+    // Define the paths to the shaders
+    const vertexPath = "path/to/your/vertex_shader.vert"; // Update to actual vertex shader path
+    const fragmentPath = "./raytracer.glsl"; // Update to actual fragment shader path
 
     let shadersLoaded = 0;
+
+    // Load the vertex shader
     loadShaderFile(this.vertexShader(), "raytracer", "vertex", () => {
       shadersLoaded++;
-      if (shadersLoaded === 2) callback(this.shader);
+      if (shadersLoaded === 2) callback(this.shader); // Call callback only when both shaders are loaded
     });
+
+    // Load the fragment shader
     loadShaderFile(fragmentPath, "raytracer", "fragment", () => {
       shadersLoaded++;
-      if (shadersLoaded === 2) callback(this.shader);
+      if (shadersLoaded === 2) callback(this.shader); // Call callback only when both shaders are loaded
     });
   }
 

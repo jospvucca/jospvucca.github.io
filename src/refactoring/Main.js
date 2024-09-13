@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Scene } from "./Scene";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
+import { createCamera, createRenderer, createScene } from "../galaxy/render";
 
 const rootElement = document.querySelector("#root");
 
@@ -42,14 +43,18 @@ const initThreeJS = async () => {
     0.9484900397558116
   );
 
-  scene = new THREE.Scene();
+  // scene = new THREE.Scene();
 
-  renderer = new THREE.WebGLRenderer({
-    antialias: true,
-  });
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setSize(renderWidth, renderHeight);
+  // renderer = new THREE.WebGLRenderer({
+  //   antialias: true,
+  // });
+  // renderer.shadowMap.enabled = true;
+  // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // renderer.setSize(renderWidth, renderHeight);
+  const renderer = createRenderer();
+  const { scene, composer, bloomPass } = createScene(renderer);
+  const { observer, cameraControl } = createCamera(renderer);
+  scene.add(observer);
 
   //controls are missing for testing purposes
   controls = new OrbitControls(camera, renderer.domElement);
@@ -59,15 +64,15 @@ const initThreeJS = async () => {
   rootElement.appendChild(renderer.domElement);
 
   //TODO - missing imports from new file
-  demoScene = new Scene(scene, camera, renderer);
+  demoScene = new Scene(scene, camera, renderer, observer, cameraControl);
   demoScene.build();
 };
 
 const animate = () => {
   requestAnimationFrame(animate);
   demoScene.update();
-  renderer.render(scene, camera);
-  demoScene.update();
+  // renderer.render(scene, camera);
+  // demoScene.update();
 };
 
 initThreeJS().then(() => animate());

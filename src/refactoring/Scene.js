@@ -2,7 +2,10 @@ import * as THREE from "three";
 import * as Photons from "../photons/photons.module.js";
 import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import { Observer } from "../galaxy/Observer.js";
-import * as SHADER_LOADER from "../../js-libs/ShaderLoader.min.js";
+import { ShaderLoader } from "../galaxy/Shader.js";
+import { Shader } from "../galaxy/Shader.js";
+import { createShaderProjectionPlane } from "../galaxy/render.js";
+import { loadTextures } from "../galaxy/render.js";
 
 export class Scene {
   constructor(scene, camera, renderer) {
@@ -16,135 +19,75 @@ export class Scene {
     this.jsonTypeStore.addNamespace("Photons", Photons);
     this.instancedParticleSystems = true;
     this.observer = new Observer();
-    this.shaderParams = {
-      time_scale: 1.0,
-      observer: {
-        motion: true,
-        distance: 11.0,
-        orbital_inclination: -10,
-      },
-      gravitational_time_dilation: true,
-    };
-
-    // Initialize uniforms for the black hole
-    this.uniforms = null;
-    this.textures = {};
-    this.shader = null;
-    this.clock = new THREE.Clock();
-    this.loadTexturesAndShader();
-  }
-
-  // Method to load textures and the shader
-  async loadTexturesAndShader() {
-    const texLoader = new THREE.TextureLoader();
-
-    const loadTexture = (symbol, filename, interpolation) => {
-      this.textures[symbol] = null;
-      texLoader.load(filename, (tex) => {
-        tex.magFilter = interpolation;
-        tex.minFilter = interpolation;
-        this.textures[symbol] = tex;
-        this.checkLoaded();
-      });
-    };
-
-    //Load neccessary textures
-    loadTexture("galaxy", "../../img/milkyway.jpg", THREE.NearestFilter);
-    loadTexture("spectra", "../../img/spectra.png", THREE.LinearFilter);
-    loadTexture("moon", "../../img/beach-ball.png", THREE.LinearFilter);
-    loadTexture("stars", "../../img/stars.png", THREE.LinearFilter);
-    loadTexture(
-      "accretion_disk",
-      "../../img/accretion-disk.png",
-      THREE.LinearFilter
-    );
-
-    // Load shader files (replace SHADER_LOADER)
-    const fragmentShaderSource = await this.loadShaderFile(
-      "src/galaxy/raytracer.glsl"
-    );
-    const vertexShaderSource = this.vertexShader();
-
-    this.shader = {
-      fragment: fragmentShaderSource,
-      vertex: vertexShaderSource,
-    };
-
-    this.checkLoaded();
-  }
-
-  // Check if both the shader and textures are fully loaded
-  checkLoaded() {
-    if (!this.shader || !this.shader.fragment || !this.shader.vertex) return; // Wait until both shaders are loaded
-    for (const key in this.textures) {
-      if (this.textures[key] === null) return; // Wait until all textures are loaded
-    }
-    this.initBlackHole(); // When everything is loaded, initialize the black hole
-  }
-
-  initBlackHole() {
-    // Define uniforms for the shader material
     this.uniforms = {
-      time: { type: "f", value: 0 },
-      resolution: {
-        type: "v2",
-        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
-      },
-      cam_pos: { type: "v3", value: this.camera.position.clone() },
-      cam_x: { type: "v3", value: new THREE.Vector3() },
-      cam_y: { type: "v3", value: new THREE.Vector3() },
-      cam_z: { type: "v3", value: new THREE.Vector3() },
+      time: { type: "f", value: 0.0 },
+      resolution: { type: "v2", value: new THREE.Vector2() },
+      accretion_disk: { type: "b", value: false },
+      use_disk_texture: { type: "b", value: true },
+      lorentz_transform: { type: "b", value: false },
+      doppler_shift: { type: "b", value: false },
+      beaming: { type: "b", value: false },
+      cam_pos: { type: "v3", value: new THREE.Vector3() },
       cam_vel: { type: "v3", value: new THREE.Vector3() },
-      planet_distance: { type: "f" },
-      planet_radius: { type: "f" },
-      star_texture: { type: "t", value: this.textures.stars },
-      accretion_disk_texture: {
-        type: "t",
-        value: this.textures.accretion_disk,
-      },
-      galaxy_texture: { type: "t", value: this.textures.galaxy },
-      planet_texture: { type: "t", value: this.textures.moon },
-      spectrum_texture: { type: "t", value: this.textures.spectra },
+      cam_dir: { type: "v3", value: new THREE.Vector3() },
+      cam_up: { type: "v3", value: new THREE.Vector3() },
+      fov: { type: "f", value: 0.0 },
+      bg_texture: { type: "t", value: null },
+      star_texture: { type: "t", value: null },
+      disk_texture: { type: "t", value: null },
     };
+    this.lastframe = Date.now();
+    this.delta = 0;
+    this.time = 0;
+  }
 
-    // Create shader material using loaded shaders
-    const material = new THREE.ShaderMaterial({
-      uniforms: this.uniforms,
-      vertexShader: this.shader.vertex, // Using loaded vertex shader
-      fragmentShader: this.shader.fragment, // Using loaded fragment shader
-    });
+  async initBlackHole() {
+    const textures = await loadTextures();
 
-    // Create and add black hole mesh to the scene
-    const blackHoleMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 32, 32),
-      material
-    );
-    this.scene.add(blackHoleMesh);
+    // Create the shader projection plane (using your custom shader logic)
+    const { mesh, changePerformanceQuality } =
+      await createShaderProjectionPlane(this.uniforms);
+
+    // Add the black hole shader mesh to the scene
+    this.scene.add(mesh);
   }
 
   // Updates shader uniforms periodically
   updateUniforms() {
-    this.uniforms.planet_distance.value =
-      this.shader.parameters?.planet?.distance || 1.0;
-    this.uniforms.planet_radius.value =
-      this.shader.parameters?.planet?.radius || 1.0;
+    if (!this.shader || !this.shader.parameters) {
+      console.warn("Shader or shader parameters are not initialized yet.");
+      return;
+    }
 
-    this.uniforms.resolution.value.x = this.renderer.domElement.width;
-    this.uniforms.resolution.value.y = this.renderer.domElement.height;
+    uniforms.time.value = time;
+    uniforms.resolution.value.x =
+      window.innerWidth * performanceConfig.resolution;
+    uniforms.resolution.value.y =
+      window.innerHeight * performanceConfig.resolution;
 
-    this.uniforms.time.value = this.clock.getElapsedTime();
-    this.uniforms.cam_pos.value.copy(this.observer.position);
+    uniforms.cam_pos.value = observer.position;
+    uniforms.cam_dir.value = observer.direction;
+    uniforms.cam_up.value = observer.up;
+    uniforms.fov.value = observer.fov;
 
-    const e = this.observer.orientation.elements;
-    this.uniforms.cam_x.value.set(e[0], e[1], e[2]);
-    this.uniforms.cam_y.value.set(e[3], e[4], e[5]);
-    this.uniforms.cam_z.value.set(e[6], e[7], e[8]);
+    uniforms.cam_vel.value = observer.velocity;
 
-    this.uniforms.cam_vel.value.set(
-      this.observer.velocity.x,
-      this.observer.velocity.y,
-      this.observer.velocity.z
-    );
+    uniforms.bg_texture.value = textures.get("bg1");
+    uniforms.star_texture.value = textures.get("star");
+    uniforms.disk_texture.value = textures.get("disk");
+
+    bloomPass.strength = bloomConfig.strength;
+    bloomPass.radius = bloomConfig.radius;
+    bloomPass.threshold = bloomConfig.threshold;
+
+    observer.distance = cameraConfig.distance;
+    observer.moving = cameraConfig.orbit;
+    observer.fov = cameraConfig.fov;
+    uniforms.lorentz_transform.value = effectConfig.lorentz_transform;
+    uniforms.accretion_disk.value = effectConfig.accretion_disk;
+    uniforms.use_disk_texture.value = effectConfig.use_disk_texture;
+    uniforms.doppler_shift.value = effectConfig.doppler_shift;
+    uniforms.beaming.value = effectConfig.beaming;
   }
 
   // Updates the shader material
@@ -171,12 +114,12 @@ export class Scene {
     //TODO - missing file
     // const loadingSpinner = new LoadingSpinner();
     // loadingSpinner.show();
-    this.setupSceneComponents().then(() => {
+    this.setupSceneComponents().then(async () => {
       //TODO - missing file
       // loadingSpinner.hide();
       console.log("Stop spinning.");
       this.setupParticleSystems();
-      this.setupShader();
+      await this.initBlackHole();
     });
   }
 
@@ -196,23 +139,18 @@ export class Scene {
   // }
 
   setupShader() {
-    this.uniforms = {
-      time: { value: 0 },
-      resolution: {
-        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
-      },
-      cam_pos: { value: this.camera.position.clone() },
-    };
+    this.uniforms.planet_distance.value =
+      this.shader.parameters.planet.distance;
+    this.uniforms.planet_radius.value = this.shader.parameters.planet.radius;
 
-    const geometry = new THREE.PlaneBufferGeometry(2, 2);
-
-    this.material = new THREE.ShaderMaterial({
+    const geometry = new THREE.PlaneGeometry(2, 2); // Replacing deprecated PlaneBufferGeometry
+    const material = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
-      vertexShader: this.vertexShader(),
-      fragmentShader: this.fragmentShader(),
+      vertexShader: this.shader.vertexShader, // Vertex shader loaded earlier
+      fragmentShader: this.shader.compile(), // Compiled fragment shader
     });
 
-    const mesh = new THREE.Mesh(geometry, this.material);
+    const mesh = new THREE.Mesh(geometry, material);
     this.scene.add(mesh);
   }
 
@@ -653,16 +591,10 @@ void main() {
   }
 
   update() {
-    // const dt = this.renderer.info.render.frame / 60;
+    this.delta = (Date.now() - this.lastframe) / 1000;
+    this.time += this.delta;
 
-    // // Move the observer based on time
-    // this.observer.move(dt, this.shaderParams);
-
-    // // Update shader uniforms
-    // // this.uniforms.time.value = this.observer.time;
-    // // this.uniforms.cam_pos.value.copy(this.observer.position);
-
-    this.updateUniforms();
+    // this.updateUniforms();
 
     this.manager.update();
 
@@ -671,10 +603,12 @@ void main() {
       system.render(this.renderer, this.camera);
     }
 
+    this.lastframe = Date.now();
     // this.renderer.update();
   }
 
   render() {
+    //this.updateUniforms();
     this.manager.render(this.renderer, this.camera);
   }
 
